@@ -23,6 +23,7 @@ This application generates images from text prompts using a Google Gemini model
 # --- Sidebar for Configuration ---
 with st.sidebar:
     st.header("Configuration")
+    # Use st.text_input with type="password" for API key
     api_key = st.text_input("Google AI Studio API Key", type="password", key="google_api_key_input")
 
     st.markdown("Or store in environment variable `GOOGLE_API_KEY` or Streamlit Secrets `st.secrets.GOOGLE_API_KEY`")
@@ -50,8 +51,8 @@ with st.sidebar:
     # Sticking to basic generation parameters
 
 # --- Main Application Area ---
-st.header("Generate Your Image")
-prompt = st.text_area("Enter a detailed description for the image:", height=150)
+st.header("Generate Your Content") # Changed from Image to Content
+prompt = st.text_area("Enter a detailed description for the image/content:", height=150) # Updated prompt text
 
 generate_button = st.button("Generate Content")
 
@@ -70,30 +71,13 @@ if generate_button and prompt:
             # Initialize the Generative Model
             model = genai.GenerativeModel(model_name)
 
-            # Set generation configuration
+            # Set generation configuration - REMOVED JSON MODE PARAMETERS
             generation_config = GenerationConfig(
                 temperature=temperature,
                 top_p=top_p,
                 top_k=top_k,
-                # For models supporting image output, explicitly request it
-                # This is crucial for 'gemini-2.0-flash-preview-image-generation'
-                response_mime_type='application/json', # Request JSON to parse parts easily
-                response_schema={
-                    "type": "array",
-                    "items": {
-                        "type": "object",
-                        "properties": {
-                            "text": {"type": "string"},
-                            "inlineData": {
-                                "type": "object",
-                                "properties": {
-                                    "mimeType": {"type": "string"},
-                                    "data": {"type": "string"}
-                                }
-                            }
-                        }
-                    }
-                } # Define schema to encourage structured output
+                # response_mime_type='application/json', # Removed
+                # response_schema=... # Removed
             )
 
             st.info(f"Generating content using model: `{model_name}`...")
@@ -111,7 +95,8 @@ if generate_button and prompt:
 
         except Exception as e:
             st.error(f"An error occurred: {e}")
-            st.error("Please check your API key and ensure the selected model is correct and supports image generation.")
+            st.error("Please check your API key and ensure the selected model is correct and available.") # Updated error message
+
 
 # --- Display Generated Content ---
 if st.session_state.generated_content:
@@ -122,16 +107,27 @@ if st.session_state.generated_content:
         # Gemini models often return a list of candidates, pick the first one
         if st.session_state.generated_content.candidates:
             candidate = st.session_state.generated_content.candidates[0]
-            if hasattr(candidate, 'content') and hasattr(candidate.content, 'parts'):
+            # Check if the candidate was blocked for safety reasons
+            if hasattr(candidate, 'finish_reason') and candidate.finish_reason == 'SAFETY':
+                st.warning("Content generation was blocked due to safety concerns.")
+                if hasattr(candidate, 'safety_ratings'):
+                    st.write("Safety Ratings:", candidate.safety_ratings)
+            elif hasattr(candidate, 'content') and hasattr(candidate.content, 'parts'):
                 for i, part in enumerate(candidate.content.parts):
                     if hasattr(part, 'inline_data') and part.inline_data:
                         # This part is image data
                         try:
-                            image_bytes = base64.b64decode(part.inline_data.data)
-                            image = Image.open(io.BytesIO(image_bytes))
-                            st.image(image, caption=f"Generated Image {i+1}", use_column_width=True)
+                            # Inline data structure has 'mime_type' and 'data'
+                            if hasattr(part.inline_data, 'data') and part.inline_data.data:
+                                image_bytes = base64.b64decode(part.inline_data.data)
+                                image = Image.open(io.BytesIO(image_bytes))
+                                st.image(image, caption=f"Generated Image {i+1}", use_column_width=True)
+                            else:
+                                st.warning(f"Image part {i+1} found, but no data.")
                         except Exception as img_e:
-                            st.warning(f"Could not display image part {i+1}: {img_e}")
+                            st.warning(f"Could not decode or display image part {i+1}: {img_e}")
+                            # Optionally display raw part data for debugging
+                            # st.json(part.to_dict())
                     elif hasattr(part, 'text') and part.text:
                         # This part is text data
                         st.write(f"Text Part {i+1}:")
@@ -139,12 +135,16 @@ if st.session_state.generated_content:
                     else:
                         st.write(f"Unknown Part {i+1}: {part}")
 
-            # Also check if the response itself has text (sometimes it's just text)
-            elif st.session_state.generated_content.text:
+            # Handle cases where the model returns only text directly
+            elif hasattr(st.session_state.generated_content, 'text') and st.session_state.generated_content.text:
                  st.write("Generated Text:")
                  st.write(st.session_state.generated_content.text)
             else:
-                st.warning("The model generated content but it did not contain recognizable image or text parts.")
+                st.warning("The model generated content but it did not contain recognizable image or text parts in the expected structure.")
+                # Display the full response for debugging
+                st.write("Raw API Response (for debugging):")
+                st.json(st.session_state.generated_content.to_dict()) # Use to_dict() for easier viewing
+
         else:
              st.warning("The model did not return any candidates.")
              # Check for prompt feedback or blocked reasons if available
@@ -155,7 +155,11 @@ if st.session_state.generated_content:
     except Exception as display_e:
         st.error(f"An error occurred while displaying the results: {display_e}")
         st.write("Raw API Response (for debugging):")
-        st.json(st.session_state.generated_content)
+        # Attempt to convert to dict safely for display
+        try:
+            st.json(st.session_state.generated_content.to_dict())
+        except:
+             st.write(st.session_state.generated_content) # Fallback if to_dict() fails
 
 
 elif generate_button and not prompt:
