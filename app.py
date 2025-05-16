@@ -8,7 +8,9 @@ from google import genai
 from google.genai import types
 
 # Initialize Gemini client
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+genai.Client(
+api_key=os.environ.get("GEMINI_API_KEY"),
+)
 
 def save_binary_file(file_name, data):
     with open(file_name, "wb") as f:
