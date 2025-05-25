@@ -1,0 +1,1349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ExpenseTrack - Smart Expense Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4f46e5',
+                        secondary: '#10b981',
+                        danger: '#ef4444',
+                        warning: '#f59e0b',
+                        dark: '#1e293b',
+                        light: '#f8fafc'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .sidebar {
+            transition: all 0.3s ease;
+        }
+        .sidebar.collapsed {
+            width: 70px;
+        }
+        .sidebar.collapsed .nav-text {
+            display: none;
+        }
+        .sidebar.collapsed .logo-text {
+            display: none;
+        }
+        .content {
+            transition: all 0.3s ease;
+        }
+        .content.expanded {
+            margin-left: 70px;
+        }
+        .active-nav {
+            background-color: rgba(79, 70, 229, 0.1);
+            border-left: 4px solid #4f46e5;
+        }
+        .chart-container {
+            height: 300px;
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .animate-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+    <div class="flex h-screen overflow-hidden">
+        <!-- Sidebar -->
+        <div id="sidebar" class="sidebar bg-white shadow-lg w-64 flex flex-col">
+            <div class="p-4 flex items-center justify-between border-b">
+                <div class="flex items-center">
+                    <i class="fas fa-wallet text-primary text-2xl mr-3"></i>
+                    <span class="logo-text text-xl font-bold text-dark">ExpenseTrack</span>
+                </div>
+                <button id="toggleSidebar" class="text-gray-500 hover:text-dark">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+            
+            <div class="p-4 border-b">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-semibold text-gray-500">TOTAL BALANCE</span>
+                    <i class="fas fa-rupee-sign text-gray-400"></i>
+                </div>
+                <div class="text-2xl font-bold text-dark">₹25,845</div>
+                <div class="flex justify-between mt-2 text-xs">
+                    <span class="text-green-500"><i class="fas fa-arrow-up mr-1"></i> ₹15,000</span>
+                    <span class="text-red-500"><i class="fas fa-arrow-down mr-1"></i> ₹8,155</span>
+                </div>
+            </div>
+            
+            <nav class="flex-1 overflow-y-auto scrollbar-hide">
+                <ul class="space-y-1 p-2">
+                    <li>
+                        <a href="#dashboard" class="nav-item flex items-center p-3 text-gray-600 hover:text-primary rounded-lg">
+                            <i class="fas fa-home mr-3 text-lg"></i>
+                            <span class="nav-text">Dashboard</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#transactions" class="nav-item flex items-center p-3 text-gray-600 hover:text-primary rounded-lg">
+                            <i class="fas fa-exchange-alt mr-3 text-lg"></i>
+                            <span class="nav-text">Transactions</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#categories" class="nav-item flex items-center p-3 text-gray-600 hover:text-primary rounded-lg">
+                            <i class="fas fa-tags mr-3 text-lg"></i>
+                            <span class="nav-text">Categories</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#budgets" class="nav-item flex items-center p-3 text-gray-600 hover:text-primary rounded-lg">
+                            <i class="fas fa-chart-pie mr-3 text-lg"></i>
+                            <span class="nav-text">Budgets</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#reports" class="nav-item flex items-center p-3 text-gray-600 hover:text-primary rounded-lg">
+                            <i class="fas fa-chart-bar mr-3 text-lg"></i>
+                            <span class="nav-text">Reports</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#goals" class="nav-item flex items-center p-3 text-gray-600 hover:text-primary rounded-lg">
+                            <i class="fas fa-bullseye mr-3 text-lg"></i>
+                            <span class="nav-text">Savings Goals</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#recurring" class="nav-item flex items-center p-3 text-gray-600 hover:text-primary rounded-lg">
+                            <i class="fas fa-redo mr-3 text-lg"></i>
+                            <span class="nav-text">Recurring</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#accounts" class="nav-item flex items-center p-3 text-gray-600 hover:text-primary rounded-lg">
+                            <i class="fas fa-wallet mr-3 text-lg"></i>
+                            <span class="nav-text">Accounts</span>
+                        </a>
+                    </li>
+                </ul>
+                
+                <div class="p-4 border-t mt-auto">
+                    <div class="text-xs font-semibold text-gray-500 mb-2">QUICK ACTIONS</div>
+                    <button class="w-full bg-primary hover:bg-indigo-700 text-white py-2 px-4 rounded-lg flex items-center justify-center mb-2">
+                        <i class="fas fa-plus mr-2"></i>
+                        <span class="nav-text">Add Transaction</span>
+                    </button>
+                    <button class="w-full bg-secondary hover:bg-emerald-700 text-white py-2 px-4 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-file-export mr-2"></i>
+                        <span class="nav-text">Export Data</span>
+                    </button>
+                </div>
+            </nav>
+        </div>
+        
+        <!-- Main Content -->
+        <div id="content" class="content flex-1 overflow-y-auto">
+            <!-- Top Navigation -->
+            <header class="bg-white shadow-sm p-4 flex items-center justify-between sticky top-0 z-10">
+                <div class="flex items-center">
+                    <h1 class="text-xl font-bold text-dark">Dashboard</h1>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <div class="relative">
+                        <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                        <input type="text" placeholder="Search..." class="pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                    </div>
+                    
+                    <div class="relative">
+                        <button class="text-gray-500 hover:text-dark relative">
+                            <i class="fas fa-bell text-xl"></i>
+                            <span class="absolute -top-1 -right-1 bg-danger text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">3</span>
+                        </button>
+                    </div>
+                    
+                    <div class="flex items-center space-x-2">
+                        <div class="h-10 w-10 rounded-full bg-primary flex items-center justify-center text-white font-bold">AK</div>
+                        <span class="font-medium hidden md:inline">Amit Kumar</span>
+                    </div>
+                </div>
+            </header>
+            
+            <!-- Main Content Sections -->
+            <main class="p-6">
+                <!-- Dashboard Section -->
+                <section id="dashboard" class="mb-10">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+                        <div class="bg-white p-6 rounded-xl shadow-sm">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="text-gray-500 text-sm">Total Income</p>
+                                    <h3 class="text-2xl font-bold text-dark mt-1">₹15,000</h3>
+                                </div>
+                                <div class="bg-green-100 p-3 rounded-full">
+                                    <i class="fas fa-arrow-up text-green-600"></i>
+                                </div>
+                            </div>
+                            <p class="text-green-500 text-sm mt-2"><i class="fas fa-caret-up mr-1"></i> 12% from last month</p>
+                        </div>
+                        
+                        <div class="bg-white p-6 rounded-xl shadow-sm">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="text-gray-500 text-sm">Total Expense</p>
+                                    <h3 class="text-2xl font-bold text-dark mt-1">₹8,155</h3>
+                                </div>
+                                <div class="bg-red-100 p-3 rounded-full">
+                                    <i class="fas fa-arrow-down text-red-600"></i>
+                                </div>
+                            </div>
+                            <p class="text-red-500 text-sm mt-2"><i class="fas fa-caret-up mr-1"></i> 5% from last month</p>
+                        </div>
+                        
+                        <div class="bg-white p-6 rounded-xl shadow-sm">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="text-gray-500 text-sm">Savings</p>
+                                    <h3 class="text-2xl font-bold text-dark mt-1">₹6,845</h3>
+                                </div>
+                                <div class="bg-blue-100 p-3 rounded-full">
+                                    <i class="fas fa-piggy-bank text-blue-600"></i>
+                                </div>
+                            </div>
+                            <p class="text-blue-500 text-sm mt-2"><i class="fas fa-caret-up mr-1"></i> 18% from last month</p>
+                        </div>
+                        
+                        <div class="bg-white p-6 rounded-xl shadow-sm">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="text-gray-500 text-sm">Current Month</p>
+                                    <h3 class="text-2xl font-bold text-dark mt-1">May 2023</h3>
+                                </div>
+                                <div class="bg-purple-100 p-3 rounded-full">
+                                    <i class="fas fa-calendar-alt text-purple-600"></i>
+                                </div>
+                            </div>
+                            <p class="text-gray-500 text-sm mt-2">5 days remaining</p>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                        <div class="bg-white p-6 rounded-xl shadow-sm lg:col-span-2">
+                            <div class="flex justify-between items-center mb-4">
+                                <h2 class="text-lg font-bold text-dark">Expense Overview</h2>
+                                <select class="border rounded-lg px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+                                    <option>This Month</option>
+                                    <option>Last Month</option>
+                                    <option>Last 3 Months</option>
+                                    <option>This Year</option>
+                                </select>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="expenseChart"></canvas>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white p-6 rounded-xl shadow-sm">
+                            <div class="flex justify-between items-center mb-4">
+                                <h2 class="text-lg font-bold text-dark">Top Categories</h2>
+                                <button class="text-primary text-sm font-medium">View All</button>
+                            </div>
+                            <div class="space-y-4">
+                                <div>
+                                    <div class="flex justify-between mb-1">
+                                        <span class="text-sm font-medium">Food & Dining</span>
+                                        <span class="text-sm font-medium">₹2,450</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                        <div class="bg-red-500 h-2 rounded-full" style="width: 45%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between mb-1">
+                                        <span class="text-sm font-medium">Transportation</span>
+                                        <span class="text-sm font-medium">₹1,200</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                        <div class="bg-blue-500 h-2 rounded-full" style="width: 25%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between mb-1">
+                                        <span class="text-sm font-medium">Shopping</span>
+                                        <span class="text-sm font-medium">₹980</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                        <div class="bg-purple-500 h-2 rounded-full" style="width: 20%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between mb-1">
+                                        <span class="text-sm font-medium">Utilities</span>
+                                        <span class="text-sm font-medium">₹750</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                        <div class="bg-green-500 h-2 rounded-full" style="width: 15%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between mb-1">
+                                        <span class="text-sm font-medium">Entertainment</span>
+                                        <span class="text-sm font-medium">₹600</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                        <div class="bg-yellow-500 h-2 rounded-full" style="width: 12%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white p-6 rounded-xl shadow-sm mb-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-lg font-bold text-dark">Recent Transactions</h2>
+                            <button class="text-primary text-sm font-medium">View All</button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Account</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="flex items-center">
+                                                <div class="flex-shrink-0 h-10 w-10 bg-red-100 rounded-full flex items-center justify-center">
+                                                    <i class="fas fa-utensils text-red-500"></i>
+                                                </div>
+                                                <div class="ml-4">
+                                                    <div class="text-sm font-medium text-gray-900">Dinner at BBQ Nation</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Food & Dining</span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">HDFC Credit Card</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-red-600">- ₹1,250</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">May 15, 2023</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                            <a href="#" class="text-primary hover:text-indigo-900 mr-3"><i class="fas fa-edit"></i></a>
+                                            <a href="#" class="text-danger hover:text-red-900"><i class="fas fa-trash"></i></a>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="flex items-center">
+                                                <div class="flex-shrink-0 h-10 w-10 bg-green-100 rounded-full flex items-center justify-center">
+                                                    <i class="fas fa-rupee-sign text-green-500"></i>
+                                                </div>
+                                                <div class="ml-4">
+                                                    <div class="text-sm font-medium text-gray-900">Salary Deposit</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Income</span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">HDFC Savings</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">+ ₹50,000</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">May 1, 2023</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                            <a href="#" class="text-primary hover:text-indigo-900 mr-3"><i class="fas fa-edit"></i></a>
+                                            <a href="#" class="text-danger hover:text-red-900"><i class="fas fa-trash"></i></a>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="flex items-center">
+                                                <div class="flex-shrink-0 h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
+                                                    <i class="fas fa-bus text-blue-500"></i>
+                                                </div>
+                                                <div class="ml-4">
+                                                    <div class="text-sm font-medium text-gray-900">Metro Recharge</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">Transportation</span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">PayTM Wallet</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-red-600">- ₹500</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">May 10, 2023</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                            <a href="#" class="text-primary hover:text-indigo-900 mr-3"><i class="fas fa-edit"></i></a>
+                                            <a href="#" class="text-danger hover:text-red-900"><i class="fas fa-trash"></i></a>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- Transactions Section (Hidden by default) -->
+                <section id="transactions" class="mb-10 hidden">
+                    <div class="bg-white p-6 rounded-xl shadow-sm mb-6">
+                        <h2 class="text-lg font-bold text-dark mb-4">All Transactions</h2>
+                        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                            <div class="flex space-x-2">
+                                <button class="bg-primary text-white px-4 py-2 rounded-lg">All</button>
+                                <button class="bg-white border px-4 py-2 rounded-lg">Income</button>
+                                <button class="bg-white border px-4 py-2 rounded-lg">Expense</button>
+                            </div>
+                            <div class="flex space-x-2 w-full md:w-auto">
+                                <select class="border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary w-full md:w-auto">
+                                    <option>All Categories</option>
+                                    <option>Food & Dining</option>
+                                    <option>Transportation</option>
+                                    <option>Shopping</option>
+                                </select>
+                                <select class="border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary w-full md:w-auto">
+                                    <option>All Accounts</option>
+                                    <option>HDFC Savings</option>
+                                    <option>HDFC Credit Card</option>
+                                    <option>PayTM Wallet</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Account</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200" id="transactionsTableBody">
+                                    <!-- Transactions will be loaded here -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="flex justify-between items-center mt-4">
+                            <div class="text-sm text-gray-500">Showing 1 to 5 of 25 entries</div>
+                            <div class="flex space-x-1">
+                                <button class="px-3 py-1 border rounded-lg">Previous</button>
+                                <button class="px-3 py-1 border rounded-lg bg-primary text-white">1</button>
+                                <button class="px-3 py-1 border rounded-lg">2</button>
+                                <button class="px-3 py-1 border rounded-lg">3</button>
+                                <button class="px-3 py-1 border rounded-lg">Next</button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- Categories Section (Hidden by default) -->
+                <section id="categories" class="mb-10 hidden">
+                    <div class="bg-white p-6 rounded-xl shadow-sm mb-6">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-lg font-bold text-dark">Categories</h2>
+                            <button class="bg-primary text-white px-4 py-2 rounded-lg flex items-center">
+                                <i class="fas fa-plus mr-2"></i> Add Category
+                            </button>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                            <div class="bg-white border rounded-lg p-4 flex items-center">
+                                <div class="h-10 w-10 rounded-full bg-red-100 flex items-center justify-center mr-3">
+                                    <i class="fas fa-utensils text-red-500"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-medium">Food & Dining</h3>
+                                    <p class="text-sm text-gray-500">₹2,450 spent</p>
+                                </div>
+                            </div>
+                            <div class="bg-white border rounded-lg p-4 flex items-center">
+                                <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center mr-3">
+                                    <i class="fas fa-bus text-blue-500"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-medium">Transportation</h3>
+                                    <p class="text-sm text-gray-500">₹1,200 spent</p>
+                                </div>
+                            </div>
+                            <div class="bg-white border rounded-lg p-4 flex items-center">
+                                <div class="h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center mr-3">
+                                    <i class="fas fa-shopping-bag text-purple-500"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-medium">Shopping</h3>
+                                    <p class="text-sm text-gray-500">₹980 spent</p>
+                                </div>
+                            </div>
+                            <div class="bg-white border rounded-lg p-4 flex items-center">
+                                <div class="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center mr-3">
+                                    <i class="fas fa-lightbulb text-green-500"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-medium">Utilities</h3>
+                                    <p class="text-sm text-gray-500">₹750 spent</p>
+                                </div>
+                            </div>
+                            <div class="bg-white border rounded-lg p-4 flex items-center">
+                                <div class="h-10 w-10 rounded-full bg-yellow-100 flex items-center justify-center mr-3">
+                                    <i class="fas fa-film text-yellow-500"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-medium">Entertainment</h3>
+                                    <p class="text-sm text-gray-500">₹600 spent</p>
+                                </div>
+                            </div>
+                            <div class="bg-white border rounded-lg p-4 flex items-center">
+                                <div class="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center mr-3">
+                                    <i class="fas fa-home text-indigo-500"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-medium">Rent</h3>
+                                    <p class="text-sm text-gray-500">₹5,000 spent</p>
+                                </div>
+                            </div>
+                            <div class="bg-white border rounded-lg p-4 flex items-center">
+                                <div class="h-10 w-10 rounded-full bg-pink-100 flex items-center justify-center mr-3">
+                                    <i class="fas fa-heartbeat text-pink-500"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-medium">Health</h3>
+                                    <p class="text-sm text-gray-500">₹300 spent</p>
+                                </div>
+                            </div>
+                            <div class="bg-white border rounded-lg p-4 flex items-center">
+                                <div class="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center mr-3">
+                                    <i class="fas fa-plus text-gray-500"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-medium text-gray-500">Add New</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- Budgets Section (Hidden by default) -->
+                <section id="budgets" class="mb-10 hidden">
+                    <div class="bg-white p-6 rounded-xl shadow-sm mb-6">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-lg font-bold text-dark">Budgets</h2>
+                            <button class="bg-primary text-white px-4 py-2 rounded-lg flex items-center">
+                                <i class="fas fa-plus mr-2"></i> Create Budget
+                            </button>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <div class="bg-white border rounded-lg p-6">
+                                <div class="flex justify-between items-start mb-4">
+                                    <div>
+                                        <h3 class="font-bold">Food & Dining</h3>
+                                        <p class="text-sm text-gray-500">Monthly Budget</p>
+                                    </div>
+                                    <div class="bg-red-100 p-2 rounded-full">
+                                        <i class="fas fa-utensils text-red-500"></i>
+                                    </div>
+                                </div>
+                                <div class="mb-2">
+                                    <div class="flex justify-between text-sm mb-1">
+                                        <span>Spent: ₹2,450</span>
+                                        <span>Limit: ₹3,000</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                        <div class="bg-red-500 h-2 rounded-full" style="width: 82%"></div>
+                                    </div>
+                                </div>
+                                <p class="text-sm text-gray-500">81.67% of budget used</p>
+                            </div>
+                            <div class="bg-white border rounded-lg p-6">
+                                <div class="flex justify-between items-start mb-4">
+                                    <div>
+                                        <h3 class="font-bold">Transportation</h3>
+                                        <p class="text-sm text-gray-500">Monthly Budget</p>
+                                    </div>
+                                    <div class="bg-blue-100 p-2 rounded-full">
+                                        <i class="fas fa-bus text-blue-500"></i>
+                                    </div>
+                                </div>
+                                <div class="mb-2">
+                                    <div class="flex justify-between text-sm mb-1">
+                                        <span>Spent: ₹1,200</span>
+                                        <span>Limit: ₹2,000</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                        <div class="bg-blue-500 h-2 rounded-full" style="width: 60%"></div>
+                                    </div>
+                                </div>
+                                <p class="text-sm text-gray-500">60% of budget used</p>
+                            </div>
+                            <div class="bg-white border rounded-lg p-6">
+                                <div class="flex justify-between items-start mb-4">
+                                    <div>
+                                        <h3 class="font-bold">Shopping</h3>
+                                        <p class="text-sm text-gray-500">Monthly Budget</p>
+                                    </div>
+                                    <div class="bg-purple-100 p-2 rounded-full">
+                                        <i class="fas fa-shopping-bag text-purple-500"></i>
+                                    </div>
+                                </div>
+                                <div class="mb-2">
+                                    <div class="flex justify-between text-sm mb-1">
+                                        <span>Spent: ₹980</span>
+                                        <span>Limit: ₹1,500</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                        <div class="bg-purple-500 h-2 rounded-full" style="width: 65%"></div>
+                                    </div>
+                                </div>
+                                <p class="text-sm text-gray-500">65.33% of budget used</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- Reports Section (Hidden by default) -->
+                <section id="reports" class="mb-10 hidden">
+                    <div class="bg-white p-6 rounded-xl shadow-sm mb-6">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-lg font-bold text-dark">Reports</h2>
+                            <div class="flex space-x-2">
+                                <button class="bg-primary text-white px-4 py-2 rounded-lg">Export</button>
+                                <button class="bg-secondary text-white px-4 py-2 rounded-lg">Print</button>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                            <div class="bg-white p-6 rounded-xl border">
+                                <h3 class="font-bold mb-4">Expense by Category</h3>
+                                <div class="chart-container">
+                                    <canvas id="categoryChart"></canvas>
+                                </div>
+                            </div>
+                            <div class="bg-white p-6 rounded-xl border">
+                                <h3 class="font-bold mb-4">Monthly Trend</h3>
+                                <div class="chart-container">
+                                    <canvas id="trendChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white p-6 rounded-xl border">
+                            <h3 class="font-bold mb-4">Detailed Report</h3>
+                            <div class="flex flex-col md:flex-row justify-between mb-4 gap-4">
+                                <div class="flex space-x-2">
+                                    <select class="border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+                                        <option>Monthly</option>
+                                        <option>Weekly</option>
+                                        <option>Yearly</option>
+                                        <option>Custom</option>
+                                    </select>
+                                    <select class="border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+                                        <option>All Categories</option>
+                                        <option>Food & Dining</option>
+                                        <option>Transportation</option>
+                                        <option>Shopping</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <input type="date" class="border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary mr-2">
+                                    <span>to</span>
+                                    <input type="date" class="border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary ml-2">
+                                </div>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Percentage</th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Transactions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200">
+                                        <tr>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <div class="flex items-center">
+                                                    <div class="flex-shrink-0 h-6 w-6 rounded-full bg-red-100 flex items-center justify-center mr-2">
+                                                        <i class="fas fa-utensils text-red-500 text-xs"></i>
+                                                    </div>
+                                                    <div class="text-sm font-medium text-gray-900">Food & Dining</div>
+                                                </div>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">₹2,450</td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <div class="flex items-center">
+                                                    <div class="w-16 bg-gray-200 rounded-full h-2 mr-2">
+                                                        <div class="bg-red-500 h-2 rounded-full" style="width: 45%"></div>
+                                                    </div>
+                                                    <span class="text-sm text-gray-500">45%</span>
+                                                </div>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">12</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <div class="flex items-center">
+                                                    <div class="flex-shrink-0 h-6 w-6 rounded-full bg-blue-100 flex items-center justify-center mr-2">
+                                                        <i class="fas fa-bus text-blue-500 text-xs"></i>
+                                                    </div>
+                                                    <div class="text-sm font-medium text-gray-900">Transportation</div>
+                                                </div>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">₹1,200</td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <div class="flex items-center">
+                                                    <div class="w-16 bg-gray-200 rounded-full h-2 mr-2">
+                                                        <div class="bg-blue-500 h-2 rounded-full" style="width: 22%"></div>
+                                                    </div>
+                                                    <span class="text-sm text-gray-500">22%</span>
+                                                </div>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">8</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <div class="flex items-center">
+                                                    <div class="flex-shrink-0 h-6 w-6 rounded-full bg-purple-100 flex items-center justify-center mr-2">
+                                                        <i class="fas fa-shopping-bag text-purple-500 text-xs"></i>
+                                                    </div>
+                                                    <div class="text-sm font-medium text-gray-900">Shopping</div>
+                                                </div>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">₹980</td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <div class="flex items-center">
+                                                    <div class="w-16 bg-gray-200 rounded-full h-2 mr-2">
+                                                        <div class="bg-purple-500 h-2 rounded-full" style="width: 18%"></div>
+                                                    </div>
+                                                    <span class="text-sm text-gray-500">18%</span>
+                                                </div>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">5</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- Goals Section (Hidden by default) -->
+                <section id="goals" class="mb-10 hidden">
+                    <div class="bg-white p-6 rounded-xl shadow-sm mb-6">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-lg font-bold text-dark">Savings Goals</h2>
+                            <button class="bg-primary text-white px-4 py-2 rounded-lg flex items-center">
+                                <i class="fas fa-plus mr-2"></i> New Goal
+                            </button>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <div class="bg-white border rounded-lg p-6">
+                                <div class="flex justify-between items-start mb-4">
+                                    <div>
+                                        <h3 class="font-bold">Emergency Fund</h3>
+                                        <p class="text-sm text-gray-500">Target: ₹50,000</p>
+                                    </div>
+                                    <div class="bg-green-100 p-2 rounded-full">
+                                        <i class="fas fa-shield-alt text-green-500"></i>
+                                    </div>
+                                </div>
+                                <div class="mb-2">
+                                    <div class="flex justify-between text-sm mb-1">
+                                        <span>Saved: ₹25,000</span>
+                                        <span>50%</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                        <div class="bg-green-500 h-2 rounded-full" style="width: 50%"></div>
+                                    </div>
+                                </div>
+                                <div class="flex justify-between text-sm text-gray-500">
+                                    <span>Started: Jan 2023</span>
+                                    <span>Target: Dec 2023</span>
+                                </div>
+                            </div>
+                            <div class="bg-white border rounded-lg p-6">
+                                <div class="flex justify-between items-start mb-4">
+                                    <div>
+                                        <h3 class="font-bold">New Laptop</h3>
+                                        <p class="text-sm text-gray-500">Target: ₹60,000</p>
+                                    </div>
+                                    <div class="bg-blue-100 p-2 rounded-full">
+                                        <i class="fas fa-laptop text-blue-500"></i>
+                                    </div>
+                                </div>
+                                <div class="mb-2">
+                                    <div class="flex justify-between text-sm mb-1">
+                                        <span>Saved: ₹15,000</span>
+                                        <span>25%</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                        <div class="bg-blue-500 h-2 rounded-full" style="width: 25%"></div>
+                                    </div>
+                                </div>
+                                <div class="flex justify-between text-sm text-gray-500">
+                                    <span>Started: Mar 2023</span>
+                                    <span>Target: Nov 2023</span>
+                                </div>
+                            </div>
+                            <div class="bg-white border rounded-lg p-6">
+                                <div class="flex justify-between items-start mb-4">
+                                    <div>
+                                        <h3 class="font-bold">Vacation</h3>
+                                        <p class="text-sm text-gray-500">Target: ₹30,000</p>
+                                    </div>
+                                    <div class="bg-yellow-100 p-2 rounded-full">
+                                        <i class="fas fa-umbrella-beach text-yellow-500"></i>
+                                    </div>
+                                </div>
+                                <div class="mb-2">
+                                    <div class="flex justify-between text-sm mb-1">
+                                        <span>Saved: ₹5,000</span>
+                                        <span>16.67%</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                        <div class="bg-yellow-500 h-2 rounded-full" style="width: 16.67%"></div>
+                                    </div>
+                                </div>
+                                <div class="flex justify-between text-sm text-gray-500">
+                                    <span>Started: May 2023</span>
+                                    <span>Target: Oct 2023</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- Recurring Section (Hidden by default) -->
+                <section id="recurring" class="mb-10 hidden">
+                    <div class="bg-white p-6 rounded-xl shadow-sm mb-6">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-lg font-bold text-dark">Recurring Transactions</h2>
+                            <button class="bg-primary text-white px-4 py-2 rounded-lg flex items-center">
+                                <i class="fas fa-plus mr-2"></i> Add Recurring
+                            </button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Frequency</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Next Date</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="flex items-center">
+                                                <div class="flex-shrink-0 h-10 w-10 bg-red-100 rounded-full flex items-center justify-center mr-3">
+                                                    <i class="fas fa-home text-red-500"></i>
+                                                </div>
+                                                <div>
+                                                    <div class="text-sm font-medium text-gray-900">House Rent</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-indigo-100 text-indigo-800">Rent</span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-red-600">- ₹5,000</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Monthly</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Jun 1, 2023</td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Active</span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                            <a href="#" class="text-primary hover:text-indigo-900 mr-3"><i class="fas fa-edit"></i></a>
+                                            <a href="#" class="text-danger hover:text-red-900"><i class="fas fa-trash"></i></a>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="flex items-center">
+                                                <div class="flex-shrink-0 h-10 w-10 bg-green-100 rounded-full flex items-center justify-center mr-3">
+                                                    <i class="fas fa-rupee-sign text-green-500"></i>
+                                                </div>
+                                                <div>
+                                                    <div class="text-sm font-medium text-gray-900">Salary</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Income</span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">+ ₹50,000</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Monthly</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Jun 1, 2023</td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Active</span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                            <a href="#" class="text-primary hover:text-indigo-900 mr-3"><i class="fas fa-edit"></i></a>
+                                            <a href="#" class="text-danger hover:text-red-900"><i class="fas fa-trash"></i></a>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="flex items-center">
+                                                <div class="flex-shrink-0 h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                                                    <i class="fas fa-wifi text-blue-500"></i>
+                                                </div>
+                                                <div>
+                                                    <div class="text-sm font-medium text-gray-900">Internet Bill</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Utilities</span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-red-600">- ₹800</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Monthly</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Jun 10, 2023</td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Active</span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                            <a href="#" class="text-primary hover:text-indigo-900 mr-3"><i class="fas fa-edit"></i></a>
+                                            <a href="#" class="text-danger hover:text-red-900"><i class="fas fa-trash"></i></a>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- Accounts Section (Hidden by default) -->
+                <section id="accounts" class="mb-10 hidden">
+                    <div class="bg-white p-6 rounded-xl shadow-sm mb-6">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-lg font-bold text-dark">Accounts</h2>
+                            <button class="bg-primary text-white px-4 py-2 rounded-lg flex items-center">
+                                <i class="fas fa-plus mr-2"></i> Add Account
+                            </button>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <div class="bg-white border rounded-lg p-6">
+                                <div class="flex justify-between items-start mb-4">
+                                    <div>
+                                        <h3 class="font-bold">HDFC Savings</h3>
+                                        <p class="text-sm text-gray-500">•••• •••• 3456</p>
+                                    </div>
+                                    <div class="bg-blue-100 p-2 rounded-full">
+                                        <i class="fas fa-university text-blue-500"></i>
+                                    </div>
+                                </div>
+                                <div class="mb-2">
+                                    <div class="text-2xl font-bold text-dark">₹42,350</div>
+                                </div>
+                                <div class="flex justify-between text-sm text-gray-500">
+                                    <span>Last updated: Today</span>
+                                    <div class="flex space-x-2">
+                                        <a href="#" class="text-primary"><i class="fas fa-edit"></i></a>
+                                        <a href="#" class="text-danger"><i class="fas fa-trash"></i></a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bg-white border rounded-lg p-6">
+                                <div class="flex justify-between items-start mb-4">
+                                    <div>
+                                        <h3 class="font-bold">HDFC Credit Card</h3>
+                                        <p class="text-sm text-gray-500">•••• •••• 7890</p>
+                                    </div>
+                                    <div class="bg-red-100 p-2 rounded-full">
+                                        <i class="fas fa-credit-card text-red-500"></i>
+                                    </div>
+                                </div>
+                                <div class="mb-2">
+                                    <div class="text-2xl font-bold text-dark">- ₹8,650</div>
+                                </div>
+                                <div class="flex justify-between text-sm text-gray-500">
+                                    <span>Due: Jun 15, 2023</span>
+                                    <div class="flex space-x-2">
+                                        <a href="#" class="text-primary"><i class="fas fa-edit"></i></a>
+                                        <a href="#" class="text-danger"><i class="fas fa-trash"></i></a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bg-white border rounded-lg p-6">
+                                <div class="flex justify-between items-start mb-4">
+                                    <div>
+                                        <h3 class="font-bold">PayTM Wallet</h3>
+                                        <p class="text-sm text-gray-500">amitkumar@paytm</p>
+                                    </div>
+                                    <div class="bg-yellow-100 p-2 rounded-full">
+                                        <i class="fas fa-wallet text-yellow-500"></i>
+                                    </div>
+                                </div>
+                                <div class="mb-2">
+                                    <div class="text-2xl font-bold text-dark">₹1,250</div>
+                                </div>
+                                <div class="flex justify-between text-sm text-gray-500">
+                                    <span>Last updated: Yesterday</span>
+                                    <div class="flex space-x-2">
+                                        <a href="#" class="text-primary"><i class="fas fa-edit"></i></a>
+                                        <a href="#" class="text-danger"><i class="fas fa-trash"></i></a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <!-- Add Transaction Modal (Hidden by default) -->
+    <div id="addTransactionModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg w-full max-w-md">
+            <div class="p-4 border-b flex justify-between items-center">
+                <h3 class="text-lg font-bold">Add Transaction</h3>
+                <button id="closeTransactionModal" class="text-gray-500 hover:text-dark">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="p-6">
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="transactionType">Type</label>
+                    <div class="flex space-x-2">
+                        <button class="flex-1 bg-primary text-white py-2 px-4 rounded-lg">Expense</button>
+                        <button class="flex-1 bg-white border py-2 px-4 rounded-lg">Income</button>
+                        <button class="flex-1 bg-white border py-2 px-4 rounded-lg">Transfer</button>
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="amount">Amount (₹)</label>
+                    <input type="number" id="amount" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary" placeholder="0.00">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="category">Category</label>
+                    <select id="category" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
+                        <option>Select Category</option>
+                        <option>Food & Dining</option>
+                        <option>Transportation</option>
+                        <option>Shopping</option>
+                        <option>Utilities</option>
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="account">Account</label>
+                    <select id="account" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
+                        <option>Select Account</option>
+                        <option>HDFC Savings</option>
+                        <option>HDFC Credit Card</option>
+                        <option>PayTM Wallet</option>
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="date">Date</label>
+                    <input type="date" id="date" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="description">Description</label>
+                    <input type="text" id="description" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary" placeholder="Optional">
+                </div>
+                <div class="flex justify-end space-x-2">
+                    <button class="bg-gray-200 text-gray-700 py-2 px-4 rounded-lg">Cancel</button>
+                    <button class="bg-primary text-white py-2 px-4 rounded-lg">Save Transaction</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Toggle sidebar
+        const toggleSidebar = document.getElementById('toggleSidebar');
+        const sidebar = document.getElementById('sidebar');
+        const content = document.getElementById('content');
+        
+        toggleSidebar.addEventListener('click', () => {
+            sidebar.classList.toggle('collapsed');
+            content.classList.toggle('expanded');
+        });
+        
+        // Navigation
+        const navItems = document.querySelectorAll('.nav-item');
+        navItems.forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                const targetId = item.getAttribute('href').substring(1);
+                
+                // Hide all sections
+                document.querySelectorAll('main > section').forEach(section => {
+                    section.classList.add('hidden');
+                });
+                
+                // Show target section
+                document.getElementById(targetId).classList.remove('hidden');
+                
+                // Update active nav item
+                navItems.forEach(navItem => {
+                    navItem.parentElement.classList.remove('active-nav');
+                });
+                item.parentElement.classList.add('active-nav');
+                
+                // Update header title
+                document.querySelector('header h1').textContent = item.querySelector('.nav-text').textContent;
+            });
+        });
+        
+        // Add Transaction Modal
+        const addTransactionBtn = document.querySelector('.bg-primary');
+        const addTransactionModal = document.getElementById('addTransactionModal');
+        const closeTransactionModal = document.getElementById('closeTransactionModal');
+        
+        if (addTransactionBtn) {
+            addTransactionBtn.addEventListener('click', () => {
+                addTransactionModal.classList.remove('hidden');
+            });
+        }
+        
+        closeTransactionModal.addEventListener('click', () => {
+            addTransactionModal.classList.add('hidden');
+        });
+        
+        // Charts
+        document.addEventListener('DOMContentLoaded', function() {
+            // Expense Chart
+            const expenseCtx = document.getElementById('expenseChart').getContext('2d');
+            const expenseChart = new Chart(expenseCtx, {
+                type: 'line',
+                data: {
+                    labels: ['1 May', '5 May', '10 May', '15 May', '20 May', '25 May', '30 May'],
+                    datasets: [{
+                        label: 'Expenses',
+                        data: [1200, 1900, 3000, 5000, 2000, 3000, 4500],
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        borderColor: 'rgba(239, 68, 68, 1)',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                drawBorder: false
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Category Chart
+            const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+            const categoryChart = new Chart(categoryCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Food & Dining', 'Transportation', 'Shopping', 'Utilities', 'Entertainment'],
+                    datasets: [{
+                        data: [2450, 1200, 980, 750, 600],
+                        backgroundColor: [
+                            'rgba(239, 68, 68, 0.8)',
+                            'rgba(59, 130, 246, 0.8)',
+                            'rgba(168, 85, 247, 0.8)',
+                            'rgba(16, 185, 129, 0.8)',
+                            'rgba(245, 158, 11, 0.8)'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right'
+                        }
+                    },
+                    cutout: '70%'
+                }
+            });
+            
+            // Trend Chart
+            const trendCtx = document.getElementById('trendChart').getContext('2d');
+            const trendChart = new Chart(trendCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May'],
+                    datasets: [{
+                        label: 'Income',
+                        data: [45000, 48000, 50000, 52000, 50000],
+                        backgroundColor: 'rgba(16, 185, 129, 0.8)',
+                        borderRadius: 6
+                    }, {
+                        label: 'Expense',
+                        data: [32000, 35000, 38000, 40000, 38000],
+                        backgroundColor: 'rgba(239, 68, 68, 0.8)',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        },
+                        y: {
+                            grid: {
+                                drawBorder: false
+                            }
+                        }
+                    }
+                }
+            });
+        });
+        
+        // Sample transactions data
+        const transactions = [
+            {
+                id: 1,
+                description: "Dinner at BBQ Nation",
+                category: "Food & Dining",
+                account: "HDFC Credit Card",
+                amount: -1250,
+                date: "2023-05-15"
+            },
+            {
+                id: 2,
+                description: "Salary Deposit",
+                category: "Income",
+                account: "HDFC Savings",
+                amount: 50000,
+                date: "2023-05-01"
+            },
+            {
+                id: 3,
+                description: "Metro Recharge",
+                category: "Transportation",
+                account: "PayTM Wallet",
+                amount: -500,
+                date: "2023-05-10"
+            },
+            {
+                id: 4,
+                description: "Amazon Shopping",
+                category: "Shopping",
+                account: "HDFC Credit Card",
+                amount: -3200,
+                date: "2023-05-18"
+            },
+            {
+                id: 5,
+                description: "Electricity Bill",
+                category: "Utilities",
+                account: "HDFC Savings",
+                amount: -750,
+                date: "2023-05-05"
+            }
+        ];
+        
+        // Render transactions table
+        function renderTransactionsTable() {
+            const tbody = document.getElementById('transactionsTableBody');
+            tbody.innerHTML = '';
+            
+            transactions.forEach(transaction => {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50';
+                
+                const amountClass = transaction.amount < 0 ? 'text-red-600' : 'text-green-600';
+                const amountText = transaction.amount < 0 ? `- ₹${Math.abs(transaction.amount)}` : `+ ₹${transaction.amount}`;
+                
+                const categoryBg = transaction.category === 'Food & Dining' ? 'bg-red-100 text-red-800' : 
+                                  transaction.category === 'Transportation' ? 'bg-blue-100 text-blue-800' :
+                                  transaction.category === 'Shopping' ? 'bg-purple-100 text-purple-800' :
+                                  transaction.category === 'Utilities' ? 'bg-green-100 text-green-800' :
+                                  'bg-gray-100 text-gray-800';
+                
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 h-10 w-10 ${transaction.amount < 0 ? 'bg-red-100' : 'bg-green-100'} rounded-full flex items-center justify-center mr-3">
+                                <i class="fas ${transaction.category === 'Food & Dining' ? 'fa-utensils text-red-500' : 
+                                              transaction.category === 'Transportation' ? 'fa-bus text-blue-500' : 
+                                              transaction.category === 'Shopping' ? 'fa-shopping-bag text-purple-500' : 
+                                              transaction.category === 'Utilities' ? 'fa-lightbulb text-green-500' : 
+                                              'fa-rupee-sign text-green-500'}"></i>
+                            </div>
+                            <div>
+                                <div class="text-sm font-medium text-gray-900">${transaction.description}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${categoryBg}">${transaction.category}</span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${transaction.account}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium ${amountClass}">${amountText}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formatDate(transaction.date)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <a href="#" class="text-primary hover:text-indigo-900 mr-3"><i class="fas fa-edit"></i></a>
+                        <a href="#" class="text-danger hover:text-red-900"><i class="fas fa-trash"></i></a>
+                    </td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+        }
+        
+        // Format date to display
+        function formatDate(dateString) {
+            const options = { year: 'numeric', month: 'short', day: 'numeric' };
+            return new Date(dateString).toLocaleDateString('en-IN', options);
+        }
+        
+        // Initialize transactions table
+        renderTransactionsTable();
+    </script>
+</body>
+</html>
